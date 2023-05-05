@@ -4,6 +4,6 @@ demultiplex:
   version: "v0.1.0"
   description: "SparkDs fork of nf-core/demultiplex"
   workspace_id: "115437722032750"
-  compute_env_id: "4QIk1KcRwEltwhFXaOkMaC"
+  compute_env_id: "60CuzbBLqIizMj0jEJvoL4"
   pipeline_admins:
     - "mark.welsh@sparktx.com"
