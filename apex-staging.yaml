@@ -1,7 +1,7 @@
 ---
 demultiplex:
   label: "Demultiplex"
-  version: "v0.1.0rc9"
+  version: "v0.1.0"
   description: "SparkDs fork of nf-core/demultiplex"
   workspace_id: "236559192150132"
   compute_env_id: "6FUyeqMTGCbG2wIfLKmQfT"
