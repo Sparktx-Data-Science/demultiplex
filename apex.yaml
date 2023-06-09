@@ -1,9 +1,11 @@
 ---
 demultiplex:
   label: "Demultiplex"
-  version: "v0.1.0"
+  version: "v0.1.1"
   description: "SparkDs fork of nf-core/demultiplex"
   workspace_id: "115437722032750"
   compute_env_id: "60CuzbBLqIizMj0jEJvoL4"
+  output_bucket: "sparkds-nextflow-outputs-production"
   pipeline_admins:
     - "mark.welsh@sparktx.com"
+  active: False
