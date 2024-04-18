@@ -1,6 +1,7 @@
 process BCLCONVERT {
     tag {"$meta.lane" ? "$meta.id"+"."+"$meta.lane" : "$meta.id" }
     label 'process_high'
+    label 'error_retry'
 
     container "nfcore/bclconvert:4.0.3"
 
