@@ -165,7 +165,7 @@ workflow DEMULTIPLEX {
 
     // MODULE: md5sum
     // Split file list into separate channels entries and generate a checksum for each
-    MD5SUM(ch_fastq_to_qc.transpose())
+    // MD5SUM(ch_fastq_to_qc.transpose())
 
     // DUMP SOFTWARE VERSIONS
     CUSTOM_DUMPSOFTWAREVERSIONS (
