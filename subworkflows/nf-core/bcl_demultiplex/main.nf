@@ -81,8 +81,7 @@ workflow BCL_DEMULTIPLEX {
 // Add meta values to fastq channel
 def generate_fastq_meta(ch_reads) {
     // Create a tuple with the meta.id and the fastq
-    ch_reads.transpose().map{
-        fc_meta, fastq ->
+    ch_reads.transpose().map { fc_meta, fastq ->
         def meta = [
             "id": fastq.getSimpleName().toString() - ~/_R[0-9]_001.*$/,
             "samplename": fastq.getSimpleName().toString() - ~/_S[0-9]+.*$/,
@@ -92,7 +91,6 @@ def generate_fastq_meta(ch_reads) {
         ]
         meta.readgroup = readgroup_from_fastq(fastq)
         meta.readgroup.SM = meta.samplename
-
         return [ meta , fastq ]
     }
     // Group by meta.id for PE samples
@@ -115,6 +113,7 @@ def readgroup_from_fastq(path) {
     // xx:yy:FLOWCELLID:LANE:... (seven fields)
 
     def line
+    def rg = [:]
 
     path.withInputStream {
         InputStream gzipStream = new java.util.zip.GZIPInputStream(it)
@@ -122,22 +121,32 @@ def readgroup_from_fastq(path) {
         BufferedReader buffered = new BufferedReader(decoder)
         line = buffered.readLine()
     }
-    assert line.startsWith('@')
-    line = line.substring(1)
-    def fields = line.split(':')
-    def rg = [:]
+    try {
+        assert line.startsWith('@')
+        line = line.substring(1)
+        def fields = line.split(':')
 
-    // CASAVA 1.8+ format, from  https://support.illumina.com/help/BaseSpace_OLH_009008/Content/Source/Informatics/BS/FileFormat_FASTQ-files_swBS.htm
-    // "@<instrument>:<run number>:<flowcell ID>:<lane>:<tile>:<x-pos>:<y-pos>:<UMI> <read>:<is filtered>:<control number>:<index>"
-    sequencer_serial = fields[0]
-    run_nubmer       = fields[1]
-    fcid             = fields[2]
-    lane             = fields[3]
-    index            = fields[-1] =~ /[GATC+-]/ ? fields[-1] : ""
+        // CASAVA 1.8+ format, from  https://support.illumina.com/help/BaseSpace_OLH_009008/Content/Source/Informatics/BS/FileFormat_FASTQ-files_swBS.htm
+        // "@<instrument>:<run number>:<flowcell ID>:<lane>:<tile>:<x-pos>:<y-pos>:<UMI> <read>:<is filtered>:<control number>:<index>"
+        sequencer_serial = fields[0]
+        run_nubmer       = fields[1]
+        fcid             = fields[2]
+        lane             = fields[3]
+        index            = fields[-1] =~ /[GATC+-]/ ? fields[-1] : ""
 
-    rg.ID = [fcid,lane].join(".")
-    rg.PU = [fcid, lane, index].findAll().join(".")
-    rg.PL = "ILLUMINA"
+        rg.ID = [fcid,lane].join(".")
+        rg.PU = [fcid, lane, index].findAll().join(".")
+        rg.PL = "ILLUMINA"
+    } catch (Exception e) {
+        // SparkDs failover for when FASTQs are totally empty/invalid
+        // We still want to proceed with the rest of the pipeline and
+        // generate MultiQC reports for all other valid FASTQs
+        // WARNING: potential unintended consequence could be that the
+        // "invalid" FASTQ is not uploaded to the final output directory
+        rg.ID = "unknown"
+        rg.PU = "unknown"
+        rg.PL = "unknown"
+    }
 
     return rg
 }
