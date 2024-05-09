@@ -6,7 +6,6 @@
 
 include { BCLCONVERT } from "../../../modules/nf-core/bclconvert/main"
 include { BCL2FASTQ  } from "../../../modules/nf-core/bcl2fastq/main"
-include { UNTAR      } from "../../../modules/nf-core/untar/main"
 
 workflow BCL_DEMULTIPLEX {
     take:
@@ -34,15 +33,12 @@ workflow BCL_DEMULTIPLEX {
                 run_dirs: [ meta, run ]
             }.set { ch_flowcells_tar }
 
-        // MODULE: untar
         // Runs when run_dir is a tar archive
         // Re-join the metadata and the untarred run directory with the samplesheet
-        ch_flowcells_tar_merged = ch_flowcells_tar.samplesheets.join( UNTAR ( ch_flowcells_tar.run_dirs ).untar )
-        ch_versions = ch_versions.mix(UNTAR.out.versions)
+        ch_flowcells_tar_merged = ch_flowcells_tar.samplesheets.join( ch_flowcells_tar.run_dirs )
 
         // Merge the two channels back together
         ch_flowcells = ch_flowcells.dir.mix(ch_flowcells_tar_merged)
-
 
         // MODULE: bclconvert
         // Demultiplex the bcl files
@@ -53,7 +49,6 @@ workflow BCL_DEMULTIPLEX {
             ch_reports  = ch_reports.mix(BCLCONVERT.out.reports)
             ch_versions = ch_versions.mix(BCLCONVERT.out.versions)
         }
-
 
         // MODULE: bcl2fastq
         // Demultiplex the bcl files
@@ -97,7 +92,6 @@ def generate_fastq_meta(ch_reads) {
         ]
         meta.readgroup = readgroup_from_fastq(fastq)
         meta.readgroup.SM = meta.samplename
-
         return [ meta , fastq ]
     }
     // Group by meta.id for PE samples
@@ -120,6 +114,7 @@ def readgroup_from_fastq(path) {
     // xx:yy:FLOWCELLID:LANE:... (seven fields)
 
     def line
+    def rg = [:]
 
     path.withInputStream {
         InputStream gzipStream = new java.util.zip.GZIPInputStream(it)
@@ -127,22 +122,32 @@ def readgroup_from_fastq(path) {
         BufferedReader buffered = new BufferedReader(decoder)
         line = buffered.readLine()
     }
-    assert line.startsWith('@')
-    line = line.substring(1)
-    def fields = line.split(':')
-    def rg = [:]
+    try {
+        assert line.startsWith('@')
+        line = line.substring(1)
+        def fields = line.split(':')
 
-    // CASAVA 1.8+ format, from  https://support.illumina.com/help/BaseSpace_OLH_009008/Content/Source/Informatics/BS/FileFormat_FASTQ-files_swBS.htm
-    // "@<instrument>:<run number>:<flowcell ID>:<lane>:<tile>:<x-pos>:<y-pos>:<UMI> <read>:<is filtered>:<control number>:<index>"
-    sequencer_serial = fields[0]
-    run_nubmer       = fields[1]
-    fcid             = fields[2]
-    lane             = fields[3]
-    index            = fields[-1] =~ /[GATC+-]/ ? fields[-1] : ""
+        // CASAVA 1.8+ format, from  https://support.illumina.com/help/BaseSpace_OLH_009008/Content/Source/Informatics/BS/FileFormat_FASTQ-files_swBS.htm
+        // "@<instrument>:<run number>:<flowcell ID>:<lane>:<tile>:<x-pos>:<y-pos>:<UMI> <read>:<is filtered>:<control number>:<index>"
+        sequencer_serial = fields[0]
+        run_nubmer       = fields[1]
+        fcid             = fields[2]
+        lane             = fields[3]
+        index            = fields[-1] =~ /[GATC+-]/ ? fields[-1] : ""
 
-    rg.ID = [fcid,lane].join(".")
-    rg.PU = [fcid, lane, index].findAll().join(".")
-    rg.PL = "ILLUMINA"
+        rg.ID = [fcid,lane].join(".")
+        rg.PU = [fcid, lane, index].findAll().join(".")
+        rg.PL = "ILLUMINA"
+    } catch (Exception e) {
+        // SparkDs failover for when FASTQs are totally empty/invalid
+        // We still want to proceed with the rest of the pipeline and
+        // generate MultiQC reports for all other valid FASTQs
+        // WARNING: potential unintended consequence could be that the
+        // "invalid" FASTQ is not uploaded to the final output directory
+        rg.ID = "unknown"
+        rg.PU = "unknown"
+        rg.PL = "unknown"
+    }
 
     return rg
 }
