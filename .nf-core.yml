@@ -1,6 +1,19 @@
-repository_type: pipeline
 lint:
-  actions_ci: False
+  actions_ci: false
   files_unchanged:
     - .github/ISSUE_TEMPLATE/bug_report.yml
     - .github/workflows/linting.yml
+nf_core_version: 3.2.0
+repository_type: pipeline
+template:
+  author: Chelsea Sawyer, Edmund Miller, Matthias De Smet
+  description: Demultiplexing pipeline for Illumina sequencing data
+  force: false
+  is_nfcore: true
+  name: demultiplex
+  org: nf-core
+  outdir: .
+  skip_features:
+    - igenomes
+  version: 1.6.1dev
+update:
