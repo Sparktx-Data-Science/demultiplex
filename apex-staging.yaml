@@ -1,0 +1,12 @@
+---
+demultiplex:
+  label: "Demultiplex"
+  version: "develop"
+  description: "SparkDs fork of nf-core/demultiplex"
+  workspace_id: "236559192150132"
+  compute_env_id: "7GaZF5jLo5UMmjOowFQzyO"
+  output_bucket: "sparkds-nextflow-outputs-staging"
+  pipeline_admins:
+    - "perry.evans@roche.com"
+    - "adam.gleason@roche.com"
+  active: False
