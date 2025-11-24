@@ -8,4 +8,5 @@ demultiplex:
   output_bucket: "sparkds-nextflow-outputs-staging"
   pipeline_admins:
     - "adam.gleason@roche.com"
+    - "perry.evans@roche.com"
   active: False
