@@ -1,0 +1,11 @@
+---
+demultiplex:
+  label: "Demultiplex"
+  version: "v1.0.0"
+  description: "RICP fork of nf-core/demultiplex"
+  workspace_id: "115437722032750"
+  compute_env_id: "3lTj4GMJqUUufmVb9rPjP0"
+  output_bucket: "sparkds-nextflow-outputs-production"
+  pipeline_admins:
+    - "adam.gleason@roche.com"
+  active: True
