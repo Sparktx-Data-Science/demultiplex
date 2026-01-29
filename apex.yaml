@@ -1,8 +1,8 @@
 ---
 demultiplex:
   label: "Demultiplex"
-  version: "v0.4.0"
-  description: "SparkDs fork of nf-core/demultiplex"
+  version: "v1.0.0"
+  description: "RICP fork of nf-core/demultiplex"
   workspace_id: "115437722032750"
   compute_env_id: "3lTj4GMJqUUufmVb9rPjP0"
   output_bucket: "sparkds-nextflow-outputs-production"
